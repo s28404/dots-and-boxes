@@ -3,7 +3,7 @@ Dots and Boxes - core game implementation
 
 Zasady gry (link): https://en.wikipedia.org/wiki/Dots_and_Boxes
 
-Autorzy: (dodaj swoje imię/alias tutaj)
+Autorzy: Kajetan Frąckowiak
 
 Instrukcja przygotowania środowiska: zobacz README.md w repozytorium.
 """
