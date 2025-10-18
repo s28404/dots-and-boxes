@@ -3,6 +3,7 @@ import gymnasium as gym
 from gymnasium.wrappers import RecordVideo
 import skfuzzy as fuzz
 from skfuzzy import control as ctrl
+import argparse
 
 
 class FuzzyCartPoleAgent:
@@ -101,18 +102,34 @@ class FuzzyCartPoleAgent:
 
 
 def main():
-    env = gym.make("CartPole-v1", render_mode="rgb_array")
-    env = RecordVideo(
-        env,
-        video_folder="./videos",
-        episode_trigger=lambda ep: True,  # Nagrywaj każdy epizod
-        name_prefix="fuzzy-cartpole",
+    parser = argparse.ArgumentParser(description="Fuzzy CartPole Agent")
+    parser.add_argument(
+        "--render_mode",
+        type=str,
+        choices=["human", "rgb_array"],
+        default="rgb_array",
+        help="Tryb renderowania: 'human' dla podglądu na żywo, 'rgb_array' dla nagrywania wideo",
     )
+    parser.add_argument(
+        "--episodes", type=int, default=5, help="Liczba epizodów do uruchomienia"
+    )
+    args = parser.parse_args()
+
+    # Tworzenie środowiska z wybranym trybem renderowania
+    env = gym.make("CartPole-v1", render_mode=args.render_mode)
+
+    # Dodaj nagrywanie tylko dla trybu rgb_array
+    if args.render_mode == "rgb_array":
+        env = RecordVideo(
+            env,
+            video_folder="./videos",
+            episode_trigger=lambda ep: True,  # Nagrywaj każdy epizod
+            name_prefix="fuzzy-cartpole",
+        )
 
     agent = FuzzyCartPoleAgent()
 
-    episodes = 5
-    for ep in range(episodes):
+    for ep in range(args.episodes):
         obs, info = env.reset()
         done = False
         truncated = False
@@ -124,7 +141,8 @@ def main():
         print(f"Episode {ep + 1}: Total reward = {total_reward}")
 
     env.close()
-    print("Filmiki zapisane w folderze ./videos")
+    if args.render_mode == "rgb_array":
+        print("Filmiki zapisane w folderze ./videos")
 
 
 if __name__ == "__main__":
