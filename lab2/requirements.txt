@@ -1,3 +1,8 @@
 numpy
 gymnasium
+gymnasium[other]
+gymnasium[classic_control]
+gymna
 scikit-fuzzy
+scipy
+networkx
