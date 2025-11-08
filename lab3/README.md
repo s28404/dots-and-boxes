@@ -1,12 +1,16 @@
 # System Rekomendacji Filmów
 
-Prosty system rekomendacji filmów i seriali oparty na klasteryzacji K-Means.
+System rekomendacji filmów i seriali wykorzystujący klasteryzację K-Means oraz TMDb API.
 
 ## Opis
 
-System grupuje filmy/seriale na podstawie ich charakterystyk (ocena IMDB, czas trwania, liczba głosów, typ) i udziela:
-- **Rekomendacji** - podobne filmy z tego samego klastra
-- **Antyrrekomendacji** - filmy do unikania na podstawie preferencji użytkownika
+System:
+1. Grupuje 20 filmów/seriali na podstawie cech (ocena, czas trwania, liczba głosów, typ)
+2. Analizuje preferencje użytkowników
+3. **Wyszukuje nowe filmy przez TMDb API** dopasowane do gustu użytkownika
+4. Udziela:
+   - **Rekomendacji** - nowe filmy z TMDb z lubianych gatunków
+   - **Antyrrekomendacji** - nowe filmy z nielubianych gatunków
 
 ## Instalacja
 
@@ -16,64 +20,102 @@ pip install -r requirements.txt
 
 ## Użytkowanie
 
+### Podstawowe użycie
+```bash
+python main.py --user "Kajetan Frackowiak"
+```
+
+### Z dodatkowymi informacjami o filmach
+```bash
+python main.py --user "Kajetan Frackowiak" --info
+```
+
+### Lista dostępnych użytkowników
 ```bash
 python main.py
 ```
 
-Program:
-1. Załaduje 20 filmów/seriali
-2. Znormalizuje cechy
-3. Zastosuje K-Means (3 klastry)
-4. Wyświetli statystyki klastrów
-5. Pokaże rekomendacje dla "Shawshank Redemption"
-6. Wygeneruje wizualizację (clusters.png)
-7. **Pokaże osobiste rekomendacje dla użytkownika** (Jan Kowalski)
+## Dostępni użytkownicy
 
-## API - Główne funkcje
+- Pawel Czapiewski
+- Kacper Olejnik
+- Pawel Kleszyk
+- Kajetan Frackowiak
+- Michal Fritza
+- Jan Skulimowski
+- Kamil Littwitz
+- Stefan Karczewski
+- Wiktor Swierzynski
+- Kacper Pach
+- Marek Walkowski
+
+## API - Główne metody
 
 ### `FilmRecommender(num_clusters=3)`
-Inicjalizuje silnik rekomendacji.
+Inicjalizuje silnik rekomendacji z K-Means.
 
 ### `load_data()`
-Załadowuje przykładowe dane o filmach/serialach.
+Załadowuje bazę 20 filmów/seriali do klasteryzacji.
 
 ### `prepare_features()`
-Normalizuje cechy do klasteryzacji.
+Normalizuje cechy filmów (StandardScaler).
 
 ### `cluster()`
-Wykonuje klasteryzację K-Means.
+Wykonuje klasteryzację K-Means na filmach.
 
 ### `add_user_opinion(user_name, likes_idx, dislikes_idx)`
-Zapisuje opinie użytkownika.
+Zapisuje preferencje użytkownika.
 - `user_name`: Imię i nazwisko
-- `likes_idx`: Indeksy filmów które się podoba
-- `dislikes_idx`: Indeksy filmów które się nie podoba
+- `likes_idx`: Indeksy filmów które lubi
+- `dislikes_idx`: Indeksy filmów których nie lubi
+
+### `search_movies_by_genre(genre_ids, exclude_genre_ids, limit)`
+Wyszukuje filmy z TMDb API na podstawie gatunków.
+- `genre_ids`: Lista ID gatunków do wyszukania
+- `exclude_genre_ids`: Lista ID gatunków do wykluczenia
+- `limit`: Liczba filmów do zwrócenia
 
 ### `get_smart_recommendations(user_name)`
-Zwraca rekomendacje i antyrrekomendacje dla użytkownika.
-- **Polecam**: 5 filmów z lubanych klastrów
-- **Odradzam**: 5 filmów z nielubianych klastrów
+Zwraca rekomendacje i antyrrekomendacje z TMDb API.
+- **Polecam**: 5 nowych filmów z lubianych gatunków
+- **Odradzam**: 5 nowych filmów z nielubianych gatunków
 
-## Pliki
+## Zewnętrzne API
 
-- `main.py` - główny skrypt z całą logika
-- `requirements.txt` - zależności
-- `clusters.png` - wizualizacja klastrów (generowana przy uruchomieniu)
+System używa **TMDb API** (The Movie Database):
+- Adres: https://api.themoviedb.org/3/
+- Darmowy klucz API zawarty w kodzie
+- Zwraca popularne filmy z określonych gatunków
+
+### Przykład dla Kajetana Frąckowiaka:
+- **Lubi:** Star Wars, Harry Potter, Shrek, Avengers (10/10)
+- **Nie lubi:** 50 twarzy Greya, 365 dni (2-3/10)
+- **System poleca:** Action, Adventure, Fantasy, Sci-Fi, Animation
+- **System odradza:** Romance, Drama (filmy erotyczne)
 
 ## Algorytm
 
-Używamy K-Means do podziału filmów na grupy. Rekomendacje są dobierane z lubanych klastrów, antyrrekomendacje z nielubianych.
+1. **K-Means clustering** grupuje 20 filmów bazowych
+2. **Analiza preferencji** określa lubiane/nielubiane gatunki
+3. **TMDb API** wyszukuje nowe filmy spoza bazy
+4. **Rekomendacje** dopasowane do gustu użytkownika
 
-### Cechy użyte:
-- rating - ocena IMDB (0-10)
-- duration - czas trwania (minuty)
-- votes - liczba głosów IMDB
-- type - typ (0=film, 1=serial)
+### Cechy użyte do klasteryzacji:
+- `rating` - ocena IMDB (0-10)
+- `duration` - czas trwania (minuty)
+- `votes` - liczba głosów IMDB
+- `type` - typ produkcji (0=film, 1=serial)
 
 ## Złożoność
 
-K-Means: O(nkl) gdzie:
+K-Means: **O(nkl)**
 - n = liczba filmów (20)
 - k = liczba klastrów (3)
 - l = liczba iteracji (~10)
+
+## Pliki
+
+- `main.py` - główny skrypt (379 linii)
+- `requirements.txt` - zależności Python
+- `README.md` - dokumentacja
 

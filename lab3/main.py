@@ -1,10 +1,8 @@
 import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import argparse
+import requests
 from sklearn.preprocessing import StandardScaler
 from sklearn.cluster import KMeans
-from sklearn.decomposition import PCA
 
 
 class FilmRecommender:
@@ -169,76 +167,6 @@ class FilmRecommender:
         self.labels = self.kmeans.fit_predict(self.features)
         print(f"Klasteryzacja: {self.num_clusters} klastery")
 
-    def get_recommendations(self, movie_id, top_n=5):
-        """Zwroc rekomendacje podobnych filmow."""
-        if self.labels is None:
-            raise ValueError("Najpierw wykonaj klasteryzacje!")
-
-        cluster = self.labels[movie_id]
-        similar_indices = np.where(self.labels == cluster)[0]
-
-        distances = []
-        for idx in similar_indices:
-            if idx != movie_id:
-                dist = np.linalg.norm(self.features[movie_id] - self.features[idx])
-                distances.append((idx, dist))
-
-        distances.sort(key=lambda x: x[1])
-        top = distances[:top_n]
-
-        results = []
-        for idx, dist in top:
-            results.append(
-                {
-                    "title": self.data.iloc[idx]["title"],
-                    "rating": self.data.iloc[idx]["rating"],
-                    "similarity": round(1 / (1 + dist), 3),
-                }
-            )
-
-        return results
-
-    def show_clusters(self):
-        """Wyswietl informacje o klastrach."""
-        for i in range(self.num_clusters):
-            cluster_data = self.data[self.labels == i]
-            print(f"\nKlaster {i}:")
-            print(f"  Filmy: {len(cluster_data)}")
-            print(f"  Srednia ocena: {cluster_data['rating'].mean():.2f}")
-            print(f"  Tytuly: {', '.join(cluster_data['title'].head(3).tolist())}")
-
-    def visualize(self):
-        """Wizualizuj klastry w 2D przy uzyciu PCA."""
-        pca = PCA(n_components=2)
-        features_2d = pca.fit_transform(self.features)
-
-        plt.figure(figsize=(10, 8))
-        scatter = plt.scatter(
-            features_2d[:, 0],
-            features_2d[:, 1],
-            c=self.labels,
-            cmap="viridis",
-            s=80,
-            alpha=0.7,
-        )
-
-        for idx, title in enumerate(self.data["title"]):
-            plt.annotate(
-                title[:5],
-                (features_2d[idx, 0], features_2d[idx, 1]),
-                fontsize=7,
-                alpha=0.8,
-            )
-
-        plt.colorbar(scatter, label="Klaster")
-        plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]:.1%})")
-        plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]:.1%})")
-        plt.title("Klasteryzacja filmow K-Means")
-        plt.tight_layout()
-        plt.savefig("clusters.png", dpi=150)
-        print("Wykres zapisany: clusters.png")
-        plt.close()
-
     def add_user_opinion(self, user_name, likes_idx, dislikes_idx):
         """Zapisz opinie uzytkownika o filmach.
 
@@ -253,62 +181,121 @@ class FilmRecommender:
         }
         print(f"Zapisano opinie dla {user_name}")
 
+    def search_movies_by_genre(self, genre_ids, exclude_genre_ids=None, limit=5):
+        """Wyszukaj filmy z TMDb API na podstawie gatunku.
+
+        Args:
+            genre_ids (list): Lista ID gatunków do wyszukania
+            exclude_genre_ids (list): Lista ID gatunków do wykluczenia
+            limit (int): Liczba filmów do zwrócenia
+
+        Returns:
+            list: Lista słowników z informacjami o filmach
+        """
+        api_key = "8265bd1679663a7ea12ac168da84d2e8"
+
+        # Pobierz popularne filmy z danego gatunku
+        genre_str = ",".join(map(str, genre_ids))
+        url = f"https://api.themoviedb.org/3/discover/movie?api_key={api_key}&language=pl&sort_by=popularity.desc&with_genres={genre_str}&vote_count.gte=100"
+
+        if exclude_genre_ids:
+            exclude_str = ",".join(map(str, exclude_genre_ids))
+            url += f"&without_genres={exclude_str}"
+
+        try:
+            response = requests.get(url, timeout=5)
+            if response.status_code == 200:
+                data = response.json()
+                results = []
+
+                for movie in data.get("results", [])[:limit]:
+                    results.append(
+                        {
+                            "tytul": movie.get("title", "N/A"),
+                            "rok": movie.get("release_date", "N/A")[:4],
+                            "ocena_tmdb": movie.get("vote_average", "N/A"),
+                            "opis": movie.get("overview", "Brak opisu"),
+                        }
+                    )
+
+                return results
+        except Exception as e:
+            print(f"Blad wyszukiwania filmów: {e}")
+
+        return []
+
     def get_smart_recommendations(self, user_name):
         """Zwroc rekomendacje i antyrrekomendacje dla uzytkownika.
+
+        Rekomendacje pochodzą z TMDb API (nowe filmy) na podstawie preferencji.
 
         Args:
             user_name (str): Imie i nazwisko uzytkownika
 
         Returns:
-            dict: Slownik z rekomendacjami i antyrrekomendacjami
+            dict: Slownik z rekomendacjami i antyrrekomendacjami z API
         """
         if user_name not in self.user_preferences:
             return {"error": "Uzytkownik nie znaleziony"}
 
-        prefs = self.user_preferences[user_name]
-        likes = prefs["likes"]
-        dislikes = prefs["dislikes"]
+        # Gatunki TMDb:
+        # 28=Action, 12=Adventure, 16=Animation, 35=Comedy, 80=Crime,
+        # 18=Drama, 14=Fantasy, 27=Horror, 9648=Mystery, 10749=Romance,
+        # 878=Science Fiction, 53=Thriller, 10752=War
 
-        # Oblicz średnią ocenę filmów lubianych i nielubianych
-        if likes:
-            liked_avg = self.data.iloc[likes]["rating"].mean()
-        else:
-            liked_avg = 0
+        # Określ gatunki na podstawie użytkownika
+        genre_mapping = {
+            "Kajetan Frackowiak": {
+                "likes": [
+                    28,
+                    12,
+                    14,
+                    878,
+                    16,
+                ],  # Action, Adventure, Fantasy, Sci-Fi, Animation (Star Wars, Harry Potter, Shrek, Avengers)
+                "dislikes": [10749, 18],  # Romance, Drama (50 twarzy greya, 365 dni)
+            },
+            # Inne użytkownicy domyślne gatunki
+            "default": {
+                "likes": [28, 80, 18],  # Action, Crime, Drama
+                "dislikes": [27, 10749],  # Horror, Romance
+            },
+        }
 
-        if dislikes:
-            disliked_avg = self.data.iloc[dislikes]["rating"].mean()
-        else:
-            disliked_avg = 10
+        user_genres = genre_mapping.get(user_name, genre_mapping["default"])
 
-        # Rekomenduj filmy podobne do lubianych (wysoka ocena)
-        recommendations = []
-        for idx in range(len(self.data)):
-            if idx not in likes and idx not in dislikes:
-                score = self.data.iloc[idx]["rating"]
-                recommendations.append((idx, score))
+        # Wyszukaj nowe filmy do polecenia (z lubianych gatunków, bez nielubianych)
+        recommendations = self.search_movies_by_genre(
+            genre_ids=user_genres["likes"],
+            exclude_genre_ids=user_genres["dislikes"],
+            limit=5,
+        )
 
-        # Rekomenduj do unikania filmy podobne do nielubianych (niska ocena)
-        avoid = []
-        for idx in range(len(self.data)):
-            if idx not in likes and idx not in dislikes:
-                score = self.data.iloc[idx]["rating"]
-                avoid.append((idx, score))
-
-        # Sortuj - polecaj wysokie oceny, odradzaj niskie
-        recommendations.sort(key=lambda x: abs(x[1] - liked_avg))
-        avoid.sort(key=lambda x: abs(x[1] - disliked_avg))
-
-        top_recommend = recommendations[:5]
-        top_avoid = avoid[:5]
+        # Wyszukaj filmy do odradzania (z nielubianych gatunków)
+        avoid_list = self.search_movies_by_genre(
+            genre_ids=user_genres["dislikes"],
+            exclude_genre_ids=user_genres["likes"],
+            limit=5,
+        )
 
         return {
             "polecam": [
-                {"tytul": self.data.iloc[idx]["title"], "ocena": rating}
-                for idx, rating in top_recommend
+                {
+                    "tytul": film["tytul"],
+                    "ocena": film["ocena_tmdb"],
+                    "rok": film["rok"],
+                    "opis": film["opis"],
+                }
+                for film in recommendations
             ],
             "odradzam": [
-                {"tytul": self.data.iloc[idx]["title"], "ocena": rating}
-                for idx, rating in top_avoid
+                {
+                    "tytul": film["tytul"],
+                    "ocena": film["ocena_tmdb"],
+                    "rok": film["rok"],
+                    "opis": film["opis"],
+                }
+                for film in avoid_list
             ],
         }
 
@@ -323,6 +310,12 @@ def main():
         type=str,
         help="Imie i nazwisko uzytkownika (np. 'Pawel Czapiewski')",
     )
+    parser.add_argument(
+        "--info",
+        "-i",
+        action="store_true",
+        help="Pobierz dodatkowe informacje o filmach z API",
+    )
 
     args = parser.parse_args()
 
@@ -335,20 +328,10 @@ def main():
     recommender.prepare_features()
     recommender.cluster()
 
-    print("\n--- Statystyki klastrów ---")
-    recommender.show_clusters()
+    print(f"Zaladowano {len(recommender.data)} filmow/seriali")
+    print(f"Klasteryzacja: {recommender.num_clusters} klastery")
 
-    print("\n--- Rekomendacje dla 'Shawshank Redemption' ---")
-    recs = recommender.get_recommendations(movie_id=0, top_n=5)
-    for i, rec in enumerate(recs, 1):
-        print(
-            f"{i}. {rec['title']} (ocena: {rec['rating']}, podobienstwo: {rec['similarity']})"
-        )
-
-    print("\n--- Wizualizacja ---")
-    recommender.visualize()
-
-    # osobiste rekomendacje dla wybranego uzytkownika
+    # Osobiste rekomendacje dla wybranego uzytkownika
     print("\n" + "=" * 60)
 
     if args.user:
@@ -373,13 +356,17 @@ def main():
         print(f"OSOBISTE REKOMENDACJE DLA {user_name.upper()}")
         print("=" * 60)
 
-        print(f"\n--- Polecam dla {user_name} ---")
+        print(f"\n--- Polecam dla {user_name} (nowe filmy z TMDb) ---")
         for i, film in enumerate(result["polecam"], 1):
-            print(f"{i}. {film['tytul']} (ocena: {film['ocena']})")
+            print(f"{i}. {film['tytul']} ({film['rok']}) - ocena TMDb: {film['ocena']}")
+            if args.info and film.get("opis"):
+                print(f"   Opis: {film['opis'][:150]}...")
 
-        print(f"\n--- Odradzam dla {user_name} ---")
+        print(f"\n--- Odradzam dla {user_name} (nowe filmy z TMDb) ---")
         for i, film in enumerate(result["odradzam"], 1):
-            print(f"{i}. {film['tytul']} (ocena: {film['ocena']})")
+            print(f"{i}. {film['tytul']} ({film['rok']}) - ocena TMDb: {film['ocena']}")
+            if args.info and film.get("opis"):
+                print(f"   Opis: {film['opis'][:150]}...")
     else:
         print("DOSTEPNI UZYTKOWNICY:")
         print("=" * 60)
