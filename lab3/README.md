@@ -115,7 +115,7 @@ K-Means: **O(nkl)**
 
 ## Pliki
 
-- `main.py` - główny skrypt (379 linii)
+- `main.py` - główny skrypt 
 - `requirements.txt` - zależności Python
 - `README.md` - dokumentacja
 
