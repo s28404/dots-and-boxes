@@ -118,12 +118,11 @@ for k in kernels:
 
 print("\nPodsumowanie wpływu kerneli:")
 # results.shape = (4, 2) -> [(kernel1, acc1), (kernel2, acc2), ...]
-# Po wszystkich kernelach wybieramy ten z najlepszym wynikiem
+# bierzemy x[1] a nie x[0], bo x[1] to accuracy, a mu chcemy z najlepszym accuracy
+# best_kernel to krotka (kernel, accuracy)
+# x[0] to nazwa kernela
 best_kernel = max(results, key=lambda x: x[1])
 print(
     f"Najlepszy wynik dał kernel: '{best_kernel[0]}' z dokładnością {best_kernel[1]:.4f}."
 )
-print("Kernel 'linear' sprawdza się dobrze przy liniowo separowalnych danych.")
-print(
-    "Kernel 'rbf' (domyślny) często radzi sobie najlepiej z nieliniowymi zależnościami."
-)
+
