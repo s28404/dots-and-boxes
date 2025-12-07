@@ -3,6 +3,30 @@
 #   Kajetan Frąckowiak s28404
 #   Marek Walkowski    s25378
 #############################
+"""
+PROBLEM:
+Wizualizacja historii straty treningowej dla porównania wydajności modeli
+z różnymi konfigurami.
+
+OPIS:
+Moduł zawiera funkcje do generowania i zapisywania wykresów funkcji straty
+dla sieci neuronowych. Pozwala porównać:
+1. Wydajność modeli z różnymi zbiorami danych (fixed hidden_size=64)
+2. Wpływ rozmiaru warstwy ukrytej na Fashion MNIST
+
+Wykresy są zapisywane do katalogu 'plots/' w formacie PNG.
+
+INSTRUKCJA UŻYCIA:
+python tools.py
+
+Funkcje:
+- plot_models_hidden_with_hidden_64() - Porównanie zbiorów danych
+- plot_mnist_fashion() - Porównanie rozmiarów warstwy
+
+REFERENCJE:
+- https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.savefig.html
+"""
+
 import matplotlib.pyplot as plt
 import json
 import os

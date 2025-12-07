@@ -3,6 +3,38 @@
 #   Kajetan Frąckowiak s28404
 #   Marek Walkowski    s25378
 #############################
+"""
+PROBLEM:
+Implementacja i trening sieci neuronowej do klasyfikacji danych z różnych zbiorów danych
+(Iris, CIFAR-10, Fashion MNIST, Heart Disease UCI).
+
+OPIS:
+Program wykorzystuje sklearn.neural_network.MLPClassifier do budowy i trenowania
+wielowarstwowego perceptronu. Obsługuje różne rozmiary warstwy ukrytej oraz
+zmienną liczbę iteracji treningowych. Program zapisuje historię straty treningowej
+do pliku JSON i oblicza metryki klasyfikacji.
+
+INSTRUKCJA UŻYCIA:
+1. Instalacja zależności:
+   pip install -r requirements.txt
+
+2. Trening modelu:
+   python main.py --dataset <dataset> --hidden_size <size> --max_iter <iter>
+
+3. Przykłady:
+   # Domyślnie (Heart Disease, hidden_size=64, max_iter=200)
+   python main.py
+
+   # Fashion MNIST z warstwą 128
+   python main.py --dataset fashion_mnist --hidden_size 128
+
+   # CIFAR-10
+   python main.py --dataset cifar10
+
+REFERENCJE:
+- https://scikit-learn.org/stable/modules/neural_networks.html
+- https://scikit-learn.org/stable/modules/generated/sklearn.neural_network.MLPClassifier.html
+"""
 
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import confusion_matrix, classification_report

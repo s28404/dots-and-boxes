@@ -3,6 +3,30 @@
 #   Kajetan Frąckowiak s28404
 #   Marek Walkowski    s25378
 #############################
+"""
+PROBLEM:
+Załadowanie i przygotowanie zbiorów danych do trenowania sieci neuronowej
+w spójny i powtarzalny sposób.
+
+OPIS:
+Moduł zawiera funkcje do ładowania czterech zbiorów danych:
+- Iris (lokalnie z sklearn)
+- Heart Disease/Breast Cancer UCI (lokalnie z sklearn)
+- Fashion MNIST (z Hugging Face)
+- CIFAR-10 (z Hugging Face)
+
+Każda funkcja normalizuje dane za pomocą StandardScaler i dzieli je na
+zbiór treningowy (80%) i testowy (20%).
+
+INSTRUKCJA UŻYCIA:
+from data_loaders import get_fashion_mnist_data, get_iris_data
+X_train, X_test, y_train, y_test = get_fashion_mnist_data()
+
+REFERENCJE:
+- https://scikit-learn.org/stable/datasets/toy_dataset.html
+- https://huggingface.co/datasets/fashion_mnist
+- https://huggingface.co/datasets/cifar10
+"""
 
 from sklearn.datasets import load_iris, load_breast_cancer
 from sklearn.preprocessing import StandardScaler
@@ -35,7 +59,6 @@ def get_heart_disease_data(test_size=0.2):
     )
 
     return X_train, X_test, y_train, y_test
-
 
 
 # ==================== Fisher Iris Dataset ====================
