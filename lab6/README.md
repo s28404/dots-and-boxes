@@ -1,6 +1,17 @@
-# Detekcja Gestów - MediaPipe
+# Platforma Reklamowa z Detekcją Oczu
 
-Prosty program do rozpoznawania gestów rąk w czasie rzeczywistym za pomocą kamery.
+**Autorzy:**
+- Kajetan Frąckowiak (s28404)
+- Marek Walkowski (s25378)
+
+Inteligentna platforma do wyświetlania reklam wykorzystująca detekcję oczu do wymuszania oglądania treści.
+
+## Technologia
+
+- **Język**: Python 3.x
+- **Framework wizji komputerowej**: OpenCV (cv2)
+- **Algorytm detekcji**: Haar Cascade Classifiers
+- **Dokumentacja**: Pełne docstringi w kodzie źródłowym
 
 ## Wymagania
 
@@ -8,56 +19,68 @@ Prosty program do rozpoznawania gestów rąk w czasie rzeczywistym za pomocą ka
 pip install -r requirements.txt
 ```
 
-## Uruchomienie
+## Funkcjonalności (2 z 3 wymagane)
+
+Program implementuje **wszystkie 3 funkcjonalności**:
+
+### 1. Detekcja Oczu
+- Sprawdza czy oglądający nie zamknął oczu
+- Wykorzystuje Haar Cascade do wykrywania twarzy (niebieski prostokąt)
+- Wykrywa oba oczy w obszarze twarzy (zielone prostokąty)
+- Wymaga widocznych obu oczu aby uznać że użytkownik patrzy
+
+### 2. Zatrzymanie Reklamy
+- Automatycznie pauzuje odtwarzanie gdy użytkownik nie patrzy
+- Wznawia gdy użytkownik wraca do oglądania
+- Licznik postępu rośnie tylko podczas faktycznego oglądania
+
+### 3. Alert
+- Po 3 sekundach niepatrzenia wyświetla czerwony alert
+- Komunikat "UWAGA! Wróć do oglądania!"
+- Alert znika gdy użytkownik zacznie ponownie patrzeć
+
+## Instrukcja Obsługi
+
+### Uruchomienie programu
 
 ```bash
-python gesture_detector.py
+python ad_platform.py
 ```
 
-## Obsługiwane gesty
+### Sterowanie
 
-| Gest | Opis |
-|------|------|
-| **OPEN_HAND** | Ręka całkowicie otwarta - wszystkie palce wyprostowane |
-| **FIST** | Pięść - wszystkie palce zaciśnięte |
-| **THUMBS_UP** | Kciuk do góry, reszta zaciśnięta |
-| **PEACE** | Dwa palce do góry (indeks + środkowy) |
-| **OK_SIGN** | Kółeczko z kciuka i indeksu, reszta wyprostowana |
+| Klawisz | Działanie |
+|---------|-----------|
+| **Q** | Wyjście z programu |
+| **R** | Reset reklamy (rozpocznij od początku) |
 
-## Jak to działa
+### Jak używać
 
-1. **Kamera** - `OpenCV` przechwytuje obraz
-2. **MediaPipe Hands** - Wykrywa pozycję dłoni (21 punktów na rękę)
-3. **Analiza landmarków** - Sprawdzamy pozycję każdego palca
-4. **Klasyfikacja** - Na podstawie pozycji palców rozpoznajemy gest
-5. **Wyświetlenie** - Rysujemy dłoń i pokazujemy rozpoznany gest
+1. **Uruchom program** - automatycznie włączy kamerę
+2. **Patrz na ekran** - program wykryje twoją twarz i oczy
+3. **Obserwuj status**:
+   - Status: `PATRZYSZ` (zielony) / `NIE PATRZYSZ` (czerwony)
+   - Reklama: `PLAY` / `PAUZA`
+   - Pasek postępu: pokazuje % obejrzanej reklamy
+4. **Zakończ oglądanie** - po 30 sekundach zobaczysz "KONIEC!"
 
-## Technika
+### Interfejs Użytkownika
 
-- **Landmarki** - 21 punktów na dłoni (kostki palców, przegub)
-- **Y-oś** - Używamy do sprawdzenia czy palec jest wyprostowany czy zaciśnięty
-- **Historia gestów** - Przechowujemy ostatnie 5 gestów dla stabilności
+### Patrzy:
+![Patrzy](patrzy.png)
 
-## Sterowanie
+### Nie Patrzy:
+![NiePatrzy](nie_patrzy.png)
 
-- `Q` - Wyjście z programu
-- Kamera włącza się automatycznie
+### Uwaga Nie Patrzy Już Jakiś Czas
+![Uwaga](uwaga.png)
 
-## Optymalizacja
+# Koniec Reklamy
+![Koniec](koniec.png)
 
-Jeśli program nie wykrywa dobrze:
-- Lepsze oświetlenie
-- Mniejsza odległość od kamery
-- Spróbuj powiększyć `min_detection_confidence` w `gesture_detector.py` (może być wolniej, ale dokładniej)
+## Referencje
 
-## Rozwój
+- **OpenCV Haar Cascades**: [OpenCV Documentation](https://docs.opencv.org/4.x/db/d28/tutorial_cascade_classifier.html)
+- **Viola-Jones Algorithm**: Podstawa Haar Cascade classifiers
+- **Python OpenCV**: [PyPI opencv-python](https://pypi.org/project/opencv-python/)
 
-Możesz łatwo dodać nowe gesty dodając nową funkcję w `gesture_detector.py`:
-
-```python
-def is_rock(landmarks):
-    # Twoja logika
-    return condition
-```
-
-I dodaj do słownika `gestures` w funkcji `detect_gesture()`.

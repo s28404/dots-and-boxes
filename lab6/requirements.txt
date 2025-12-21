@@ -1,3 +1,9 @@
-mediapipe==0.10.7
-opencv-python==4.8.1.78
-numpy==1.24.3
+# Platforma Reklamowa z Detekcją Oczu
+# Python 3.x required
+
+# OpenCV - framework do wizji komputerowej
+# Zawiera Haar Cascade classifiers do detekcji twarzy i oczu
+opencv-python>=4.8.0
+
+# NumPy - operacje na macierzach (zależność OpenCV)
+numpy>=1.24.0
